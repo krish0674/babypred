@@ -28,12 +28,12 @@ def get_preprocessing():
     ])
 
 class BabySleepCocoDataset(Dataset):
-    def __init__(self, images_dir, annotation_path, transform=None):
+    def __init__(self, images_dir, annotation_path, transform=None, limit=None):
         self.images_dir = images_dir
-        self.pose_dir = os.path.join(images_dir, "processed_pose")  # new folder
-        os.makedirs(self.pose_dir, exist_ok=True)
-
         self.transform = transform
+
+        self.pose_dir = "./pose_images"
+        os.makedirs(self.pose_dir, exist_ok=True)
 
         with open(annotation_path, 'r') as f:
             data = json.load(f)
@@ -49,31 +49,32 @@ class BabySleepCocoDataset(Dataset):
         }
 
         self.samples = [
-            (self.image_id_to_name[iid], self.cat_to_binary[self.image_to_label[iid]])
+            (os.path.join(images_dir, self.image_id_to_name[iid]),
+             self.cat_to_binary[self.image_to_label[iid]],
+             self.image_id_to_name[iid])
             for iid in self.image_id_to_name if iid in self.image_to_label
         ]
+
+        if limit is not None:
+            self.samples = self.samples[:limit]
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        img_name, label = self.samples[idx]
+        img_path, label, file_name = self.samples[idx]
 
-        src_img_path = os.path.join(self.images_dir, img_name)
-        
-        # pose image path
-        pose_img_path = os.path.join(self.pose_dir, img_name.replace(".jpg", "_pose.jpg"))
+        pose_img_path = os.path.join(self.pose_dir, file_name)
 
-        # If pose saved already, load it
-        if os.path.exists(pose_img_path):
-            image = cv2.imread(pose_img_path)
-        else:
-            # run pose only once
-            image = pose_process(src_img_path)
-            if image is None:
-                raise ValueError(f"Pose failed: {src_img_path}")
+        if not os.path.exists(pose_img_path):
+            pose_img = pose_process(img_path)
+            if pose_img is None:
+                raise ValueError(f"Pose failed for: {img_path}")
+            cv2.imwrite(pose_img_path, pose_img)
 
-            cv2.imwrite(pose_img_path, image)
+        image = cv2.imread(pose_img_path)
+        if image is None:
+            raise ValueError(f"Could not load saved pose: {pose_img_path}")
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
