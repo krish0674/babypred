@@ -22,7 +22,7 @@ def create_dataloaders(base_dir, split="test", batch_size=32, num_workers=0, tra
     """
     split_dir = os.path.join(base_dir, split)
     ann_path = os.path.join(split_dir, "_annotations.coco.json")
-    dataset = BabySleepCocoDataset(split_dir, ann_path, transform=transform_fn(),limit=2)
+    dataset = BabySleepCocoDataset(split_dir, ann_path, transform=transform_fn())
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     return loader
 

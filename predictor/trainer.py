@@ -20,15 +20,15 @@ def create_dataloaders(base_dir, batch_size=32, num_workers=0):
           ├── _annotations.coco.json
     """
 
-    def make_loader(split, transform_fn, shuffle,limit):
+    def make_loader(split, transform_fn, shuffle):
         split_dir = os.path.join(base_dir, split)
         ann_path = os.path.join(split_dir, "_annotations.coco.json")
-        dataset = BabySleepCocoDataset(split_dir, ann_path, transform=transform_fn(),limit=limit)
+        dataset = BabySleepCocoDataset(split_dir, ann_path, transform=transform_fn())
         return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
-    train_loader = make_loader("train", get_train_augs, True,limit=5)
-    val_loader = make_loader("valid", get_preprocessing, False,limit=2)
-    test_loader = make_loader("test", get_preprocessing, False,limit=1)
+    train_loader = make_loader("train", get_train_augs, True)
+    val_loader = make_loader("valid", get_preprocessing, False)
+    test_loader = make_loader("test", get_preprocessing, False)
 
     return train_loader, val_loader,test_loader
 
