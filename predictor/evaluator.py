@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from torchvision import models
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+from posture.OpenPoseKeras.pose_init import pose_init
 
 from .dataloader import get_preprocessing, BabySleepCocoDataset
 
@@ -65,8 +66,10 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, default="best_model_densenet.pth", help="Path to the trained model")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size for evaluation")
     parser.add_argument("--num_workers", type=int, default=4, help="Number of DataLoader workers")
-    
+    parser.add_argument("--weights", type=str, help="Number of DataLoader workers")
+
     args = parser.parse_args()
+    pose_init(args.weights)
 
     evaluate_model(
         base_dir=args.base_dir,
