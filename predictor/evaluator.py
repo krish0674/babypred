@@ -6,7 +6,7 @@ from torchvision import models
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 
-from dataloader import get_preprocessing, BabySleepCocoDataset
+from .dataloader import get_preprocessing, BabySleepCocoDataset
 
 def create_dataloaders(base_dir, split="test", batch_size=32, num_workers=0, transform_fn=get_preprocessing):
     """
