@@ -65,7 +65,7 @@ if __name__ == "__main__":
     parser.add_argument("--base_dir", type=str, default="dataset", help="Base directory containing train/val/test folders")
     parser.add_argument("--model_path", type=str, default="best_model_densenet.pth", help="Path to the trained model")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size for evaluation")
-    parser.add_argument("--num_workers", type=int, default=4, help="Number of DataLoader workers")
+    parser.add_argument("--num_workers", type=int, default=0, help="Number of DataLoader workers")
     parser.add_argument("--weights", type=str, help="Number of DataLoader workers")
 
     args = parser.parse_args()
