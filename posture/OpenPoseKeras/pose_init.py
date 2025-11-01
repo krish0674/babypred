@@ -6,7 +6,7 @@ pose_model = None
 pose_params = None
 pose_model_params = None
 
-def pose_init():
+def pose_init(weights):
     """
     Load Pose Model only ONCE.
     Call this BEFORE using Dataset / Dataloader loop.
@@ -25,7 +25,7 @@ def pose_init():
 
     # Build & load model
     pose_model = get_testing_model(np_branch1=38, np_branch2=19, stages=6)
-    pose_model.load_weights("./model/keras/model.h5")
+    pose_model.load_weights(weights)
 
     # Load config params
     pose_params, pose_model_params = config_reader_colab()
