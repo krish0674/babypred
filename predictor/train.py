@@ -1,5 +1,5 @@
 import argparse
-from trainer import train_model
+from .trainer import train_model
 from posture.OpenPoseKeras.pose_init import pose_init
 
 def main():
