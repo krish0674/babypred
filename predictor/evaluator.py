@@ -26,7 +26,7 @@ def create_dataloaders(base_dir, split="test", batch_size=32, num_workers=0, tra
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     return loader
 
-def evaluate_model(base_dir, model_path, batch_size=1, num_workers=4):
+def evaluate_model(base_dir, model_path, batch_size=1, num_workers=0):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     test_loader = create_dataloaders(base_dir, split="test", batch_size=batch_size, num_workers=num_workers)
