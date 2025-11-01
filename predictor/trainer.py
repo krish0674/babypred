@@ -40,25 +40,13 @@ def train_model(base_dir="dataset" ,batch_size=32,
         base_dir=base_dir,
         batch_size=batch_size
     )
-    
-    count = 0
-    for img, label in train_loader:
-        # take first image from batch
-        if img.dim() == 4:
-            img = img[0]
-
-        img_np = img.permute(1,2,0).cpu().numpy()
-        label_val = label.item() if label.dim()==1 else label[0].item()
-
-        plt.imshow(img_np)
-        plt.title("Safe" if label_val == 1 else "Unsafe")
-        plt.axis("off")
-        plt.show()
-
-        count += 1
-        if count == 3:
-            break
-
+    for batch in train_loader:
+        for i, (img, label) in enumerate(batch):
+            if i == 3: break
+            plt.imshow(img.squeeze().permute(1,2,0).numpy())
+            plt.title("Safe" if label.item() == 1 else "Unsafe")
+            plt.axis("off")
+            plt.show()
 
     model = models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1)
     model.classifier = nn.Linear(model.classifier.in_features, 2)  
