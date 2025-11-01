@@ -4,9 +4,9 @@ import math
 import time
 import numpy as np
 import util
-from config_reader_colab import config_reader_colab
+from .config_reader_colab import config_reader_colab
 from scipy.ndimage.filters import gaussian_filter
-from model import get_testing_model
+from .model import get_testing_model
 
 
 # find connection in the specified sequence, center 29 is in the position 15
