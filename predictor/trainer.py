@@ -40,24 +40,36 @@ def train_model(base_dir="dataset" ,batch_size=32,
         base_dir=base_dir,
         batch_size=batch_size
     )
+    import matplotlib.pyplot as plt
+    import os
+
+    save_dir = "/kaggle/working/vis_samples"
+    os.makedirs(save_dir, exist_ok=True)
+
     count = 0
     for imgs, labels in train_loader:
-        # imgs: [B, C, H, W], labels: [B]
-
         for i in range(imgs.shape[0]):
-            img = imgs[i].permute(1, 2, 0).cpu().numpy()   # CHW -> HWC
+            img = imgs[i].permute(1, 2, 0).cpu().numpy()
             label = labels[i].item()
+            title = "Safe" if label == 1 else "Unsafe"
 
+            plt.figure()
             plt.imshow(img)
-            plt.title("Safe" if label == 1 else "Unsafe")
+            plt.title(title)
             plt.axis("off")
-            plt.show()
+
+            file_path = os.path.join(save_dir, f"sample_{count}_{title}.png")
+            plt.savefig(file_path, bbox_inches='tight')
+            plt.close()
 
             count += 1
             if count == 3:
                 break
         if count == 3:
             break
+
+    print(f"Saved images to: {save_dir}")
+
 
 
     model = models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1)
