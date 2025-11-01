@@ -3,7 +3,7 @@ import cv2
 import math
 import time
 import numpy as np
-import util
+from . import util
 from .config_reader_colab import config_reader_colab
 from scipy.ndimage.filters import gaussian_filter
 from .model import get_testing_model
