@@ -27,10 +27,12 @@ def get_preprocessing():
         ToTensorV2(),
     ])
 
-
 class BabySleepCocoDataset(Dataset):
-    def __init__(self, images_dir, annotation_path, transform=None,limit=None):
+    def __init__(self, images_dir, annotation_path, transform=None):
         self.images_dir = images_dir
+        self.pose_dir = os.path.join(images_dir, "processed_pose")  # new folder
+        os.makedirs(self.pose_dir, exist_ok=True)
+
         self.transform = transform
 
         with open(annotation_path, 'r') as f:
@@ -40,31 +42,42 @@ class BabySleepCocoDataset(Dataset):
         self.image_to_label = {ann['image_id']: ann['category_id'] for ann in data['annotations']}
         self.categories = {c['id']: c['name'] for c in data['categories']}
 
-       
         safe_classes = {"baby_on_back"}
         self.cat_to_binary = {
             cid: 1 if self.categories[cid] in safe_classes else 0
             for cid in self.categories
-       }
+        }
 
         self.samples = [
-            (os.path.join(images_dir, self.image_id_to_name[iid]), self.cat_to_binary[self.image_to_label[iid]])
+            (self.image_id_to_name[iid], self.cat_to_binary[self.image_to_label[iid]])
             for iid in self.image_id_to_name if iid in self.image_to_label
         ]
-
-        if limit is not None:
-            self.samples = self.samples[:limit]
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        img_path, label = self.samples[idx]
-        image = pose_process(img_path)
-        #call the process funtion here 
-        if image is None:
-            raise ValueError(f"Image not found: {img_path}")
+        img_name, label = self.samples[idx]
+
+        src_img_path = os.path.join(self.images_dir, img_name)
+        
+        # pose image path
+        pose_img_path = os.path.join(self.pose_dir, img_name.replace(".jpg", "_pose.jpg"))
+
+        # If pose saved already, load it
+        if os.path.exists(pose_img_path):
+            image = cv2.imread(pose_img_path)
+        else:
+            # run pose only once
+            image = pose_process(src_img_path)
+            if image is None:
+                raise ValueError(f"Pose failed: {src_img_path}")
+
+            cv2.imwrite(pose_img_path, image)
+
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         if self.transform:
             image = self.transform(image=image)['image']
+
         return image, torch.tensor(label, dtype=torch.long)
