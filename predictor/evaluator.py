@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from dataloader import get_preprocessing, BabySleepCocoDataset
 
-def create_dataloaders(base_dir, split="test", batch_size=32, num_workers=4, transform_fn=get_preprocessing):
+def create_dataloaders(base_dir, split="test", batch_size=32, num_workers=0, transform_fn=get_preprocessing):
     """
     base_dir/
       ├── train/
