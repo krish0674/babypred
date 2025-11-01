@@ -6,6 +6,7 @@ from tqdm import tqdm
 from .dataloader import BabySleepCocoDataset,get_train_augs,get_preprocessing
 from torch.utils.data import Dataset,DataLoader
 import os 
+import matplotlib.pyplot as plt
 
 def create_dataloaders(base_dir, batch_size=32, num_workers=0):
     """
@@ -25,9 +26,9 @@ def create_dataloaders(base_dir, batch_size=32, num_workers=0):
         dataset = BabySleepCocoDataset(split_dir, ann_path, transform=transform_fn())
         return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
-    train_loader = make_loader("train", get_train_augs, True)
-    val_loader = make_loader("valid", get_preprocessing, False)
-    test_loader = make_loader("test", get_preprocessing, False)
+    train_loader = make_loader("train", get_train_augs, True,limit=5)
+    val_loader = make_loader("valid", get_preprocessing, False,limit=2)
+    test_loader = make_loader("test", get_preprocessing, False,limit=1)
 
     return train_loader, val_loader,test_loader
 
@@ -39,6 +40,13 @@ def train_model(base_dir="dataset" ,batch_size=32,
         base_dir=base_dir,
         batch_size=batch_size
     )
+    
+    for i, (img, label) in enumerate(train_loader):
+        if i == 3: break
+        plt.imshow(img.squeeze().permute(1,2,0).numpy())
+        plt.title("Safe" if label.item() == 1 else "Unsafe")
+        plt.axis("off")
+        plt.show()
 
     model = models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1)
     model.classifier = nn.Linear(model.classifier.in_features, 2)  

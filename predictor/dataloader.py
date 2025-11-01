@@ -29,7 +29,7 @@ def get_preprocessing():
 
 
 class BabySleepCocoDataset(Dataset):
-    def __init__(self, images_dir, annotation_path, transform=None):
+    def __init__(self, images_dir, annotation_path, transform=None,limit=None):
         self.images_dir = images_dir
         self.transform = transform
 
@@ -51,6 +51,9 @@ class BabySleepCocoDataset(Dataset):
             (os.path.join(images_dir, self.image_id_to_name[iid]), self.cat_to_binary[self.image_to_label[iid]])
             for iid in self.image_id_to_name if iid in self.image_to_label
         ]
+
+        if limit is not None:
+            self.samples = self.samples[:limit]
 
     def __len__(self):
         return len(self.samples)
