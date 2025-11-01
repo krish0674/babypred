@@ -1,8 +1,9 @@
 from configobj import ConfigObj
 import numpy as np
+import os 
 
 def config_reader_colab():
-    config = ConfigObj('./config')
+    config = ConfigObj(os.path.join(os.path.dirname(__file__), 'config'))
 
     param = config['param']
     model_id = param['modelID']
