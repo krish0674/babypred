@@ -54,7 +54,6 @@ def evaluate_model(base_dir, model_path, batch_size=1, num_workers=0, num_classe
     print(f"F1-score : {f1:.4f}")
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate Baby Pose Classification Model")
     parser.add_argument("--base_dir", type=str, default="dataset")
