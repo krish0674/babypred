@@ -20,8 +20,8 @@ def pose_init(weights):
     print("Loading Pose model (one-time init)...")
 
     # Import actual functions
-    from model import get_testing_model
-    from config_reader_colab import config_reader_colab
+    from .model import get_testing_model
+    from .config_reader_colab import config_reader_colab
 
     # Build & load model
     pose_model = get_testing_model(np_branch1=38, np_branch2=19, stages=6)
@@ -42,6 +42,6 @@ def pose_process(img):
     if pose_model is None:
         raise RuntimeError("❌ pose_model not initialized! Call pose_init(...) first.")
 
-    from demo_image import process 
+    from .demo_image import process 
     canvas = process(img, pose_params, pose_model_params,pose_model)
     return canvas
