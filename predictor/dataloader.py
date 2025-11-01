@@ -8,7 +8,7 @@ from albumentations import (
     ShiftScaleRotate, CoarseDropout
 )
 from albumentations.pytorch import ToTensorV2
-from posture.OpenPoseKeras.pose_init import pose_process
+from .posture.OpenPoseKeras.pose_init import pose_process
 
 def get_train_augs():
     return Compose([
