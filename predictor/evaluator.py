@@ -14,16 +14,6 @@ from .dataloader import get_preprocessing, BabySleepCocoDataset
 
 
 def create_dataloaders(base_dir, split="test", batch_size=32, num_workers=0, transform_fn=get_preprocessing):
-    """
-    base_dir/
-      ├── train/
-      │   ├── _annotations.coco.json
-      │   ├── image1.jpg ...
-      ├── val/
-      │   ├── _annotations.coco.json
-      ├── test/
-          ├── _annotations.coco.json
-    """
     split_dir = os.path.join(base_dir, split)
     ann_path = os.path.join(split_dir, "_annotations.coco.json")
     dataset = BabySleepCocoDataset(split_dir, ann_path, split=split, transform=transform_fn())
@@ -31,23 +21,24 @@ def create_dataloaders(base_dir, split="test", batch_size=32, num_workers=0, tra
     return loader
 
 
-def draw_text_on_image(image, actual, predicted, prob):
-    """
-    Draws actual and predicted text with probability on the given PIL image.
-    """
+def draw_text_on_image(image, actual, predicted, prob, correct=True):
+    """Draw actual and predicted labels with probability on the given PIL image."""
     draw = ImageDraw.Draw(image)
     try:
         font = ImageFont.truetype("arial.ttf", 24)
     except:
         font = ImageFont.load_default()
 
+    # Green if correct, red if incorrect
+    color = "green" if correct else "red"
+
     text1 = f"Actual: {actual}"
     text2 = f"Predicted: {predicted} ({prob:.2f})"
 
-    # Background rectangles for better visibility
-    draw.rectangle([(0, 0), (image.width, 70)], fill=(0, 0, 0, 128))
+    # Background rectangle
+    draw.rectangle([(0, 0), (image.width, 70)], fill=(0, 0, 0))
     draw.text((10, 10), text1, fill="white", font=font)
-    draw.text((10, 40), text2, fill="white", font=font)
+    draw.text((10, 40), text2, fill=color, font=font)
 
     return image
 
@@ -58,7 +49,7 @@ def evaluate_model(base_dir, model_path, batch_size=1, num_workers=0):
 
     test_loader = create_dataloaders(base_dir, split="test", batch_size=batch_size, num_workers=num_workers)
 
-    # Load pretrained DenseNet121 and modify final layer
+    # Load pretrained DenseNet121
     model = models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1)
     model.classifier = torch.nn.Linear(model.classifier.in_features, 2)
     model.load_state_dict(torch.load(model_path, map_location=device))
@@ -67,7 +58,7 @@ def evaluate_model(base_dir, model_path, batch_size=1, num_workers=0):
 
     all_preds, all_labels = [], []
 
-    # Folder to save predictions
+    # Folder to save annotated predictions
     save_dir = "predictions"
     if os.path.exists(save_dir):
         shutil.rmtree(save_dir)
@@ -77,8 +68,17 @@ def evaluate_model(base_dir, model_path, batch_size=1, num_workers=0):
 
     print("\nStarting Evaluation... (0: safe, 1: unsafe)")
 
+    img_counter = 0
+
     with torch.no_grad():
-        for idx, (imgs, labels, paths) in enumerate(tqdm(test_loader, desc="Evaluating")):
+        for batch in tqdm(test_loader, desc="Evaluating"):
+            # Handle datasets that return (imgs, labels) or (imgs, labels, paths)
+            if len(batch) == 3:
+                imgs, labels, paths = batch
+            else:
+                imgs, labels = batch
+                paths = [None] * len(imgs)
+
             imgs, labels = imgs.to(device), labels.to(device)
             outputs = model(imgs)
             probs = torch.softmax(outputs, dim=1)
@@ -88,27 +88,30 @@ def evaluate_model(base_dir, model_path, batch_size=1, num_workers=0):
             all_labels.extend(labels.cpu().numpy())
 
             for i in range(len(imgs)):
-                img_path = paths[i]
-                img_name = os.path.basename(img_path)
                 actual_class = class_map[int(labels[i].cpu().numpy())]
                 predicted_class = class_map[int(preds[i].cpu().numpy())]
                 prob = float(confs[i].cpu().numpy())
+                correct = (actual_class == predicted_class)
 
-                # Load original image
-                try:
-                    original_img = Image.open(img_path).convert("RGB")
-                except Exception as e:
-                    print(f"Error loading image {img_path}: {e}")
-                    continue
+                # Try to load the original image if path is available
+                if paths[i] is not None and os.path.exists(paths[i]):
+                    try:
+                        original_img = Image.open(paths[i]).convert("RGB")
+                    except Exception as e:
+                        print(f"Error loading image {paths[i]}: {e}")
+                        continue
+                else:
+                    # Generate placeholder image if no path provided
+                    img_array = (imgs[i].cpu().numpy().transpose(1, 2, 0) * 255).astype(np.uint8)
+                    original_img = Image.fromarray(img_array)
 
-                # Draw results on the image
-                annotated_img = draw_text_on_image(original_img, actual_class, predicted_class, prob)
-
-                # Save image
-                save_path = os.path.join(save_dir, img_name)
+                # Annotate and save
+                annotated_img = draw_text_on_image(original_img, actual_class, predicted_class, prob, correct)
+                img_counter += 1
+                save_path = os.path.join(save_dir, f"img_{img_counter:04d}.jpg")
                 annotated_img.save(save_path)
 
-    # Compute metrics
+    # Metrics
     acc = accuracy_score(all_labels, all_preds)
     prec = precision_score(all_labels, all_preds)
     rec = recall_score(all_labels, all_preds)
@@ -119,7 +122,7 @@ def evaluate_model(base_dir, model_path, batch_size=1, num_workers=0):
     print(f"Precision: {prec:.4f}")
     print(f"Recall   : {rec:.4f}")
     print(f"F1-score : {f1:.4f}")
-    print(f"\nAnnotated predictions saved to: {os.path.abspath(save_dir)}")
+    print(f"\nAnnotated images saved in: {os.path.abspath(save_dir)}")
 
 
 if __name__ == "__main__":
