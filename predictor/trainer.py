@@ -110,7 +110,7 @@ def train_model(base_dir="dataset", batch_size=32, num_epochs=10, lr=1e-4, weigh
         print(f"Val Loss:   {val_loss:.4f} | Val Acc:   {val_acc:.4f}")
 
         # ✅ Save best by accuracy
-        if val_acc > best_acc:
+        if val_acc >= best_acc:
             best_acc = val_acc
             torch.save(model.state_dict(), "best_model_densenet_10classes.pth")
             print("✅ Best model saved")
