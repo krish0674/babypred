@@ -29,21 +29,22 @@ def get_preprocessing():
 
 
 class BabySleepCocoDataset(Dataset):
-    def __init__(self, images_dir, annotation_path, transform=None, limit=None):
+    def __init__(self, images_dir, annotation_path, split="train",
+                 transform=None, limit=None):
+
         self.images_dir = images_dir
         self.transform = transform
 
-        self.pose_dir = "./pose_images"
+        # ✅ separate pose output folder for each split
+        self.pose_dir = f"./pose_images_{split}"
         os.makedirs(self.pose_dir, exist_ok=True)
 
-        # Load COCO json
         with open(annotation_path, 'r') as f:
             data = json.load(f)
 
         self.image_id_to_name = {img['id']: img['file_name'] for img in data['images']}
         self.image_to_label = {ann['image_id']: ann['category_id'] for ann in data['annotations']}
 
-        # Build samples (image path + category id)
         self.samples = [
             (os.path.join(images_dir, self.image_id_to_name[iid]),
              self.image_to_label[iid],
@@ -61,13 +62,14 @@ class BabySleepCocoDataset(Dataset):
         img_path, label, file_name = self.samples[idx]
         pose_img_path = os.path.join(self.pose_dir, file_name)
 
-        # ✅ run pose only once & cache
+        # ✅ only generate pose once per image for this split
         if not os.path.exists(pose_img_path):
             pose_img = pose_process(img_path)
             if pose_img is None:
                 raise ValueError(f"Pose failed for: {img_path}")
             cv2.imwrite(pose_img_path, pose_img)
 
+        # ✅ load cached pose image
         image = cv2.imread(pose_img_path)
         if image is None:
             raise ValueError(f"Could not load pose result: {pose_img_path}")
@@ -77,5 +79,4 @@ class BabySleepCocoDataset(Dataset):
         if self.transform:
             image = self.transform(image=image)['image']
 
-        # ✅ RETURN MULTI-CLASS LABEL
         return image, torch.tensor(label, dtype=torch.long)
