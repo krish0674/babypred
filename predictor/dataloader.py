@@ -28,11 +28,12 @@ def get_preprocessing():
     ])
 
 class BabySleepCocoDataset(Dataset):
-    def __init__(self, images_dir, annotation_path, transform=None, limit=None):
+    def __init__(self, images_dir, annotation_path, split="train", transform=None, limit=None):
         self.images_dir = images_dir
         self.transform = transform
 
-        self.pose_dir = "./pose_images"
+        # ✅ separate pose dir per split
+        self.pose_dir = f"./pose_images_{split}"
         os.makedirs(self.pose_dir, exist_ok=True)
 
         with open(annotation_path, 'r') as f:
@@ -82,3 +83,4 @@ class BabySleepCocoDataset(Dataset):
             image = self.transform(image=image)['image']
 
         return image, torch.tensor(label, dtype=torch.long)
+
